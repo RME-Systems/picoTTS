@@ -3,19 +3,20 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    namespace 'com.svox.pico'
+    compileSdk 36
 
     defaultConfig {
         applicationId "com.svox.pico"
-        minSdk 28
-        targetSdk 31
+        minSdk 21
+        targetSdk 36
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             ndkBuild {
-                arguments  "APP_STL=c++_shared"
+                arguments  "APP_STL=c++_shared", "APP_LDFLAGS+=-Wl,-z,max-page-size=16384"
             }
         }
     }
@@ -41,14 +42,6 @@ android {
     sourceSets {
         main.jniLibs.srcDirs = ['libs']
     }
-}
-
-task wrapper(type: Wrapper){
-   gradleVersion = '7.2'
-}
-
-task prepareKotlinBuildScriptModel {
-
 }
 
 dependencies {
