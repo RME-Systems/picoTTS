@@ -47,39 +47,46 @@ public class EngineSettings extends PreferenceActivity {
     
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
-        if (requestCode == VOICE_DATA_CHECK_CODE){
+        if (requestCode == VOICE_DATA_CHECK_CODE && data != null){
             ArrayList<String> available = data.getStringArrayListExtra(TextToSpeech.Engine.EXTRA_AVAILABLE_VOICES);
             ArrayList<String> unavailable = data.getStringArrayListExtra(TextToSpeech.Engine.EXTRA_UNAVAILABLE_VOICES);
 
             addPreferencesFromResource(R.xml.voices_list);
             
-            for (int i = 0; i < available.size(); i++){
-                Log.e("debug", available.get(i));
-                String[] languageCountry = available.get(i).split("-");
-                Locale loc = new Locale(languageCountry[0], languageCountry[1]);
-                Preference pref = findPreference(available.get(i));
-                pref.setTitle(loc.getDisplayLanguage() + " (" + loc.getDisplayCountry() + ")");
-                pref.setSummary(R.string.installed);
-                pref.setEnabled(false);
+            if (available != null) {
+                for (int i = 0; i < available.size(); i++){
+                    Log.e("debug", available.get(i));
+                    String[] languageCountry = available.get(i).split("-");
+                    Locale loc = new Locale(languageCountry[0], languageCountry[1]);
+                    Preference pref = findPreference(available.get(i));
+                    if (pref != null) {
+                        pref.setTitle(loc.getDisplayLanguage() + " (" + loc.getDisplayCountry() + ")");
+                        pref.setSummary(R.string.installed);
+                        pref.setEnabled(false);
+                    }
+                }
             }
 
-            
-            for (int i = 0; i < unavailable.size(); i++){
-                final String unavailableLang = unavailable.get(i);
-                String[] languageCountry = unavailableLang.split("-");
-                Locale loc = new Locale(languageCountry[0], languageCountry[1]);
-                Preference pref = findPreference(unavailableLang);
-                pref.setTitle(loc.getDisplayLanguage() + " (" + loc.getDisplayCountry() + ")");
-                pref.setSummary(R.string.not_installed);
-                pref.setEnabled(true);
-                pref.setOnPreferenceClickListener(new OnPreferenceClickListener(){
-                    public boolean onPreferenceClick(Preference preference) {
-                        Uri marketUri = Uri.parse(MARKET_URI_START + unavailableLang.toLowerCase().replace("-", "."));
-                        Intent marketIntent = new Intent(Intent.ACTION_VIEW, marketUri);
-                        startActivity(marketIntent);
-                        return false;
+            if (unavailable != null) {
+                for (int i = 0; i < unavailable.size(); i++){
+                    final String unavailableLang = unavailable.get(i);
+                    String[] languageCountry = unavailableLang.split("-");
+                    Locale loc = new Locale(languageCountry[0], languageCountry[1]);
+                    Preference pref = findPreference(unavailableLang);
+                    if (pref != null) {
+                        pref.setTitle(loc.getDisplayLanguage() + " (" + loc.getDisplayCountry() + ")");
+                        pref.setSummary(R.string.not_installed);
+                        pref.setEnabled(true);
+                        pref.setOnPreferenceClickListener(new OnPreferenceClickListener(){
+                            public boolean onPreferenceClick(Preference preference) {
+                                Uri marketUri = Uri.parse(MARKET_URI_START + unavailableLang.toLowerCase().replace("-", "."));
+                                Intent marketIntent = new Intent(Intent.ACTION_VIEW, marketUri);
+                                startActivity(marketIntent);
+                                return false;
+                            }
+                        });
                     }
-                });
+                }
             }
         }
     }

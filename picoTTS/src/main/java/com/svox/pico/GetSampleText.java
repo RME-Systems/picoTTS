@@ -33,23 +33,24 @@ public class GetSampleText extends Activity {
         Intent returnData = new Intent();
 
         Intent i = getIntent();
-        String language = i.getExtras().getString("language");
-        String country = i.getExtras().getString("country");
-        String variant = i.getExtras().getString("locale");
+        Bundle extras = (i != null) ? i.getExtras() : null;
+        String language = (extras != null) ? extras.getString("language") : null;
+        String country = (extras != null) ? extras.getString("country") : null;
+        String variant = (extras != null) ? extras.getString("locale") : null;
 
-        if (language.equals("eng")) {
-          if (country.equals("GBR")){
+        if ("eng".equals(language)) {
+          if ("GBR".equals(country)){
             returnData.putExtra("sampleText", getString(R.string.eng_gbr_sample));
           } else {
             returnData.putExtra("sampleText", getString(R.string.eng_usa_sample));
           }
-        } else if (language.equals("fra")) {
+        } else if ("fra".equals(language)) {
           returnData.putExtra("sampleText", getString(R.string.fra_fra_sample));
-        } else if (language.equals("ita")) {
+        } else if ("ita".equals(language)) {
           returnData.putExtra("sampleText", getString(R.string.ita_ita_sample));
-        } else if (language.equals("deu")) {
+        } else if ("deu".equals(language)) {
           returnData.putExtra("sampleText", getString(R.string.deu_deu_sample));
-        } else if (language.equals("spa")) {
+        } else if ("spa".equals(language)) {
           returnData.putExtra("sampleText", getString(R.string.spa_esp_sample));
         } else {
           result = TextToSpeech.LANG_NOT_SUPPORTED;
