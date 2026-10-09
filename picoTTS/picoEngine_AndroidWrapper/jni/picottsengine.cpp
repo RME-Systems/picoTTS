@@ -341,7 +341,7 @@ setLanguage(void *eng, const char *lang, const char *country, const char *locale
     currentLanguage = requestedLanguage;
 
     if (PICO_OK != status) {
-        ALOGE("setLanguage %s %s %s failed", *lang, *country, *locale);
+        ALOGE("setLanguage %s %s %s failed", lang, country, locale);
         releaseLanguageResources();
         return ANDROID_TTS_FAILURE;
     } else {
@@ -365,7 +365,7 @@ android_tts_result_t setLanguageByIdx(int idx) {
 
 android_tts_result_t
 loadLanguage(void *eng, const char *lang, const char *country, const char *locale) {
-    setLanguage(androidEngineStruct, lang, country, locale);
+    return setLanguage(androidEngineStruct, lang, country, locale);
 }
 
 
@@ -374,7 +374,7 @@ android_tts_result_t getLanguage(void *eng, char *language, char *country, char 
         strcpy(language, "\0");
         strcpy(country, "\0");
         strcpy(locale, "\0");
-        ALOGE("getLanguage %s %s %s failed", *language, *country, *locale);
+        ALOGE("getLanguage %s %s %s failed", language, country, locale);
         return ANDROID_TTS_FAILURE;
     } else {
         strcpy(language, availableLanguages[currentLanguage].lang);
