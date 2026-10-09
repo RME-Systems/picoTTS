@@ -491,7 +491,7 @@ JNIEXPORT jint JNICALL
     int result = engine->funcs->setProperty(engine, nameChars, valueChars, valueLength);
 
     env->ReleaseStringUTFChars(name, nameChars);
-    env->ReleaseStringUTFChars(name, valueChars);
+    env->ReleaseStringUTFChars(value, valueChars);
 
     return (jint) result;
 }
