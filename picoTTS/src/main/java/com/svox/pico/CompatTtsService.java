@@ -23,18 +23,74 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeechService;
 import android.util.Log;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
 public abstract class CompatTtsService extends TextToSpeechService {
 
     private static final boolean DBG = false;
     private static final String TAG = "CompatTtsService";
 
+    private static final String[] REQUIRED_VOICE_FILES = {
+            "de-DE_gl0_sg.bin", "de-DE_ta.bin", "en-GB_kh0_sg.bin", "en-GB_ta.bin",
+            "en-US_lh0_sg.bin", "en-US_ta.bin", "es-ES_ta.bin", "es-ES_zl0_sg.bin",
+            "fr-FR_nk0_sg.bin", "fr-FR_ta.bin", "it-IT_cm0_sg.bin", "it-IT_ta.bin"
+    };
+
     private SynthProxy mNativeSynth = null;
+
+    private void ensureVoiceDataInstalled() {
+        File filesDir = getFilesDir();
+        if (filesDir == null) return;
+        boolean missing = false;
+        for (String file : REQUIRED_VOICE_FILES) {
+            File f = new File(filesDir, file);
+            if (!f.exists() || f.length() == 0) {
+                missing = true;
+                break;
+            }
+        }
+        if (missing) {
+            Log.i(TAG, "Voice data missing, extracting svoxlangpack...");
+            try (InputStream is = getResources().openRawResource(R.raw.svoxlangpack);
+                 ZipInputStream zis = new ZipInputStream(is)) {
+                ZipEntry entry;
+                byte[] buffer = new byte[16384];
+                while ((entry = zis.getNextEntry()) != null) {
+                    if (entry.isDirectory()) {
+                        File dir = new File(filesDir, entry.getName());
+                        dir.mkdirs();
+                    } else {
+                        File destFile = new File(filesDir, entry.getName());
+                        File parent = destFile.getParentFile();
+                        if (parent != null) parent.mkdirs();
+                        try (FileOutputStream fos = new FileOutputStream(destFile)) {
+                            int len;
+                            while ((len = zis.read(buffer)) > 0) {
+                                fos.write(buffer, 0, len);
+                            }
+                        }
+                    }
+                    zis.closeEntry();
+                }
+                Log.i(TAG, "Voice data extracted successfully.");
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to extract voice data", e);
+            }
+        }
+    }
 
     //protected abstract String getSoFilename();
 
     @Override
     public void onCreate() {
         if (DBG) Log.d(TAG, "onCreate()");
+
+        ensureVoiceDataInstalled();
 
         //String soFilename = getSoFilename();
 /*
