@@ -201,12 +201,34 @@ bool checkLanguageInstallation(int languageIndex)
     }
 }
 
-unsigned int getLanguageIndex(const char *lang)
+static const char* normalizeLanguage(const char* lang) {
+    if (lang == NULL) return NULL;
+    if (strcmp(lang, "es") == 0 || strcmp(lang, "spa") == 0) return "spa";
+    if (strcmp(lang, "en") == 0 || strcmp(lang, "eng") == 0) return "eng";
+    if (strcmp(lang, "de") == 0 || strcmp(lang, "deu") == 0 || strcmp(lang, "ger") == 0) return "deu";
+    if (strcmp(lang, "fr") == 0 || strcmp(lang, "fra") == 0 || strcmp(lang, "fre") == 0) return "fra";
+    if (strcmp(lang, "it") == 0 || strcmp(lang, "ita") == 0) return "ita";
+    return lang;
+}
+
+static const char* normalizeCountry(const char* country) {
+    if (country == NULL) return NULL;
+    if (strcmp(country, "US") == 0 || strcmp(country, "USA") == 0) return "USA";
+    if (strcmp(country, "GB") == 0 || strcmp(country, "GBR") == 0 || strcmp(country, "UK") == 0) return "GBR";
+    if (strcmp(country, "DE") == 0 || strcmp(country, "DEU") == 0) return "DEU";
+    if (strcmp(country, "ES") == 0 || strcmp(country, "ESP") == 0) return "ESP";
+    if (strcmp(country, "FR") == 0 || strcmp(country, "FRA") == 0) return "FRA";
+    if (strcmp(country, "IT") == 0 || strcmp(country, "ITA") == 0) return "ITA";
+    return country;
+}
+
+unsigned int getLanguageIndex(const char *rawLang)
 {
     unsigned int ret = -1;
-    if (NULL == lang || strcmp(lang,"\0")==0) {
+    if (NULL == rawLang || strcmp(rawLang, "") == 0) {
         return ret;
     }
+    const char *lang = normalizeLanguage(rawLang);
     for (int i = 0; i < picoNumSupportedLanguages; i++) {
         if (strcmp(lang, availableLanguages[i].lang) == 0) {
             if (true == checkLanguageInstallation(i))
@@ -223,15 +245,19 @@ unsigned int getLanguageIndex(const char *lang)
 }
 
 
-unsigned int getLanguageIndex(const char *lang, const char *country) {
+unsigned int getLanguageIndex(const char *rawLang, const char *rawCountry) {
     unsigned int ret = -1;
-    if (NULL==lang || strcmp(lang, "\0")==0)
+    if (NULL == rawLang || strcmp(rawLang, "") == 0)
     {
         return ret;
     }
-    else if (NULL == country || strcmp(country,"\0")==0) {
+    const char *lang = normalizeLanguage(rawLang);
+    const char *country = normalizeCountry(rawCountry);
+
+    if (NULL == country || strcmp(country, "") == 0) {
         return getLanguageIndex(lang);
     }
+    // 1. First attempt: exact match of (language, country)
     for (int i = 0; i < picoNumSupportedLanguages; i++) {
         if (strcmp(lang, availableLanguages[i].lang) == 0 &&
             strcmp(country, availableLanguages[i].country) == 0) {
@@ -245,17 +271,34 @@ unsigned int getLanguageIndex(const char *lang, const char *country) {
             }
         }
     }
-    return ret;
+    // 2. Fallback: match by base language (e.g. spa-USA -> Spanish es-ES)
+    return getLanguageIndex(lang);
 }
 
 
 android_tts_support_result_t
-isLanguageAvailable(void *eng, const char *lang, const char *country, const char *locale) {
-    if (-1 == getLanguageIndex(lang, country)) {
+isLanguageAvailable(void *eng, const char *rawLang, const char *rawCountry, const char *locale) {
+    if (NULL == rawLang || strcmp(rawLang, "") == 0) {
         return ANDROID_TTS_LANG_NOT_SUPPORTED;
-    } else {
-        return ANDROID_TTS_LANG_AVAILABLE;
     }
+    const char *lang = normalizeLanguage(rawLang);
+    const char *country = normalizeCountry(rawCountry);
+
+    int baseIdx = getLanguageIndex(lang);
+    if (-1 == baseIdx) {
+        return ANDROID_TTS_LANG_NOT_SUPPORTED;
+    }
+
+    if (country != NULL && strcmp(country, "") != 0) {
+        for (int i = 0; i < picoNumSupportedLanguages; i++) {
+            if (strcmp(lang, availableLanguages[i].lang) == 0 &&
+                strcmp(country, availableLanguages[i].country) == 0) {
+                return ANDROID_TTS_LANG_COUNTRY_AVAILABLE;
+            }
+        }
+    }
+
+    return ANDROID_TTS_LANG_AVAILABLE;
 }
 
 

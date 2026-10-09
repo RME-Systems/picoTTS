@@ -147,7 +147,17 @@ public abstract class CompatTtsService extends TextToSpeechService {
     @Override
     protected String[] onGetLanguage() {
         if (mNativeSynth == null) return null;
-        return mNativeSynth.getLanguage();
+        String[] lang = mNativeSynth.getLanguage();
+        if (lang != null && lang.length >= 3 && lang[0] != null && !lang[0].isEmpty()) {
+            return lang;
+        }
+        java.util.Locale defaultLoc = java.util.Locale.getDefault();
+        String iso3Lang = defaultLoc.getISO3Language();
+        String iso3Country = defaultLoc.getISO3Country();
+        if (onIsLanguageAvailable(iso3Lang, iso3Country, "") >= TextToSpeech.LANG_AVAILABLE) {
+            return new String[]{iso3Lang, iso3Country, ""};
+        }
+        return new String[]{"eng", "USA", ""};
     }
 
     @Override
@@ -163,6 +173,8 @@ public abstract class CompatTtsService extends TextToSpeechService {
         int result = onIsLanguageAvailable(lang, country, variant);
         if (result >= TextToSpeech.LANG_AVAILABLE) {
             mNativeSynth.setLanguage(lang, country, variant);
+        } else {
+            mNativeSynth.setLanguage("eng", "USA", "");
         }
 
         return result;
@@ -180,9 +192,11 @@ public abstract class CompatTtsService extends TextToSpeechService {
         String country = request.getCountry();
         String variant = request.getVariant();
         if (mNativeSynth.setLanguage(lang, country, variant) != TextToSpeech.SUCCESS) {
-            Log.e(TAG, "setLanguage(" + lang + "," + country + "," + variant + ") failed");
-            callback.error();
-            return;
+            Log.w(TAG, "setLanguage(" + lang + "," + country + "," + variant + ") failed, falling back to English (USA)");
+            if (mNativeSynth.setLanguage("eng", "USA", "") != TextToSpeech.SUCCESS) {
+                callback.error();
+                return;
+            }
         }
 
         // Set speech rate
